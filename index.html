@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scavenger Hunt Terminal</title>
+  <style>
+    :root {
+      --bg: #05080a;
+      --panel: rgba(6, 20, 14, 0.9);
+      --line: #163526;
+      --text: #9dffbf;
+      --bright: #58ff8a;
+      --dim: #5fb078;
+      --danger: #ff5e7e;
+      --shadow: 0 0 18px rgba(88, 255, 138, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Courier New", Courier, monospace;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top, rgba(26, 80, 50, 0.18), transparent 25%),
+        linear-gradient(180deg, #030506 0%, #07100c 100%);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(88, 255, 138, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(88, 255, 138, 0.05) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      opacity: 0.25;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.025) 0px,
+        rgba(255, 255, 255, 0.025) 1px,
+        transparent 2px,
+        transparent 4px
+      );
+      pointer-events: none;
+      opacity: 0.22;
+      mix-blend-mode: screen;
+    }
+
+    .dots {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.16;
+      background-image: radial-gradient(var(--bright) 0.7px, transparent 0.7px);
+      background-size: 24px 24px;
+      filter: blur(0.2px);
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 28px 18px 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .terminal {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      border-radius: 14px;
+      overflow: hidden;
+      backdrop-filter: blur(4px);
+    }
+
+    .terminal-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(10, 28, 20, 0.95);
+    }
+
+    .light {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .light.red { color: #ff6b7d; background: currentColor; }
+    .light.yellow { color: #ffc857; background: currentColor; }
+    .light.green { color: #65ff95; background: currentColor; }
+
+    .terminal-title {
+      margin-left: 8px;
+      font-size: 0.95rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .content {
+      padding: 26px 18px 30px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.05;
+      color: var(--bright);
+      text-shadow: 0 0 12px rgba(88, 255, 138, 0.25);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      margin: 0 0 24px;
+      color: var(--dim);
+      line-height: 1.6;
+      max-width: 700px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 18px;
+      background: rgba(5, 15, 10, 0.88);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--bright);
+      font-size: 0.92rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    input {
+      flex: 1 1 280px;
+      min-width: 0;
+      padding: 14px 14px;
+      border-radius: 10px;
+      border: 1px solid #214734;
+      background: #020504;
+      color: var(--bright);
+      outline: none;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      box-shadow: inset 0 0 12px rgba(88, 255, 138, 0.05);
+    }
+
+    input:focus {
+      border-color: var(--bright);
+      box-shadow: 0 0 0 3px rgba(88, 255, 138, 0.12);
+    }
+
+    button {
+      padding: 14px 18px;
+      border: 1px solid #2d7c52;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #0f2f1e 0%, #091a12 100%);
+      color: var(--bright);
+      font-family: inherit;
+      font-size: 0.98rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      box-shadow: 0 0 10px rgba(88, 255, 138, 0.12);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: #5fff9a;
+      box-shadow: 0 0 14px rgba(88, 255, 138, 0.22);
+    }
+
+    .output {
+      min-height: 170px;
+      white-space: pre-wrap;
+      line-height: 1.7;
+      color: #c5ffd7;
+      font-size: 0.98rem;
+    }
+
+    .status {
+      font-size: 0.9rem;
+      color: var(--dim);
+      margin-bottom: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .error {
+      color: var(--danger);
+      text-shadow: 0 0 10px rgba(255, 94, 126, 0.16);
+    }
+
+    .success {
+      color: var(--bright);
+    }
+
+    .fragment-box {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px dashed #2e6e4a;
+      background: rgba(7, 22, 14, 0.75);
+    }
+
+    .fragment-title {
+      font-size: 0.8rem;
+      color: var(--dim);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .fragment-value {
+      font-size: 1.1rem;
+      color: var(--bright);
+      letter-spacing: 0.14em;
+      word-break: break-word;
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      color: #77b88d;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .small-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .mini {
+      border: 1px solid var(--line);
+      background: rgba(4, 13, 9, 0.9);
+      border-radius: 10px;
+      padding: 10px;
+      color: var(--dim);
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 640px) {
+      .content {
+        padding: 18px 14px 22px;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      button, input {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dots"></div>
+
+  <div class="wrap">
+    <div class="terminal">
+      <div class="terminal-top">
+        <span class="light red"></span>
+        <span class="light yellow"></span>
+        <span class="light green"></span>
+        <div class="terminal-title">Residential Hunt Terminal // Access Node</div>
+      </div>
+
+      <div class="content">
+        <h1>Scavenger Hunt Access</h1>
+        <p class="subtitle">
+          Find hidden paper clues around the house. Enter each code to unlock a message,
+          hint, or fragment of the final answer. Wrong entries trigger an access denied response.
+        </p>
+
+        <div class="panel">
+          <label class="label" for="codeInput">Enter Hunt Code</label>
+          <div class="row">
+            <input id="codeInput" type="text" placeholder="Example: 123473A" autocomplete="off" />
+            <button id="submitBtn">Decrypt</button>
+            <button id="clearBtn" type="button">Clear</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="status" id="statusText">System ready...</div>
+          <div class="output" id="outputText">Awaiting code input.</div>
+          <div id="fragmentArea"></div>
+        </div>
+
+        <div class="panel">
+          <div class="label">Host Notes</div>
+          <div class="footer-note">
+            Edit the <strong>codeMap</strong> in the script section to replace the example codes with your own.
+            Each code can reveal a clue, part of a phrase, or a final word fragment.
+          </div>
+          <div class="small-grid">
+            <div class="mini">Style: hacker terminal / neon green / code-grid background</div>
+            <div class="mini">Works as a single HTML file on GitHub Pages</div>
+            <div class="mini">Easy to swap in your own codes and messages</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const codeMap = {
+      "123473A": {
+        message: "ACCESS GRANTED. Hidden phrase fragment recovered. Search the place where shoes wait by the door.",
+        fragment: "NIGHT"
+      },
+      "DELTA92": {
+        message: "DECRYPTION SUCCESSFUL. Next hint: find the coldest place in the house.",
+        fragment: "RUN"
+      },
+      "ZX-441": {
+        message: "NODE UNLOCKED. Look under something soft where people sit and relax.",
+        fragment: "THE"
+      },
+      "LOCK731": {
+        message: "FILE OPENED. Final approach: check where towels or cleaning supplies are stored.",
+        fragment: "GRID"
+      },
+      "FINALKEY": {
+        message: "MASTER KEY ACCEPTED. Final phrase complete. Use all fragments to solve the mission.",
+        fragment: "TONIGHT"
+      }
+    };
+
+    const input = document.getElementById("codeInput");
+    const submitBtn = document.getElementById("submitBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const outputText = document.getElementById("outputText");
+    const statusText = document.getElementById("statusText");
+    const fragmentArea = document.getElementById("fragmentArea");
+
+    function showResult() {
+      const rawCode = input.value.trim().toUpperCase();
+
+      if (!rawCode) {
+        statusText.textContent = "No code entered.";
+        statusText.className = "status error";
+        outputText.textContent = "Please enter a valid hunt code.";
+        fragmentArea.innerHTML = "";
+        return;
+      }
+
+      const entry = codeMap[rawCode];
+
+      if (entry) {
+        statusText.textContent = "Access granted.";
+        statusText.className = "status success";
+        typeText(outputText, entry.message);
+        fragmentArea.innerHTML = `
+          <div class="fragment-box">
+            <div class="fragment-title">Recovered Fragment</div>
+            <div class="fragment-value">${entry.fragment}</div>
+          </div>
+        `;
+      } else {
+        statusText.textContent = "Access denied.";
+        statusText.className = "status error";
+        typeText(outputText, "ERROR 403 // INVALID CODE // Search again and locate the correct clue.");
+        fragmentArea.innerHTML = "";
+      }
+    }
+
+    function typeText(element, text) {
+      element.textContent = "";
+      let index = 0;
+      const speed = 18;
+
+      const timer = setInterval(() => {
+        element.textContent += text.charAt(index);
+        index++;
+        if (index >= text.length) {
+          clearInterval(timer);
+        }
+      }, speed);
+    }
+
+    submitBtn.addEventListener("click", showResult);
+
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        showResult();
+      }
+    });
+
+    clearBtn.addEventListener("click", () => {
+      input.value = "";
+      statusText.textContent = "System ready...";
+      statusText.className = "status";
+      outputText.textContent = "Awaiting code input.";
+      fragmentArea.innerHTML = "";
+      input.focus();
+    });
+  </script>
+</body>
+</html>
